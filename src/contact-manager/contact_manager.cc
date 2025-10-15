@@ -24,10 +24,10 @@ constexpr std::string_view kFileName = "contacts.json";
 // =========================================================================
 
 /**
- * @brief Converts a Contacts object to a JSON object (Serialization).
+ * @brief Converts a Contact object to a JSON object (Serialization).
  * This function must be in the same namespace/scope as Contacts to work.
  * @param j The JSON object to populate.
- * @param c The Contacts object to serialize.
+ * @param c The Contact object to serialize.
  */
 void to_json(json& j, const Contact& c) {
   j = json{
@@ -35,10 +35,10 @@ void to_json(json& j, const Contact& c) {
 }
 
 /**
- * @brief Converts a Json object to a Contacts object (Deserialization).
+ * @brief Converts a Json object to a Contact object (Deserialization).
  * This function must be in the same namespace/scope as Contacts to work.
  * @param j The JSON object to read from.
- * @param c The Contacts object to populate.
+ * @param c The Contact object to populate.
  */
 void from_json(const json& j, Contact& c) {
   c.name = j.at("name").get<std::string>();
@@ -50,6 +50,10 @@ void from_json(const json& j, Contact& c) {
 //  Class Definition
 // =========================================================================
 
+/**
+ * @brief Construct a new Contact Manager:: Contact Manager object
+ * 
+ */
 ContactManager::ContactManager() {
   menu_list_ = {"Add Contact", "View All Contacts", "Delete Contact",
                 "Save All Contacts", "Exit"};
@@ -61,6 +65,10 @@ ContactManager::ContactManager() {
   LoadContactList();
 }
 
+/**
+ * @brief Run the Contact Manager loop (the main execution program).
+ * 
+ */
 void ContactManager::Run() {
   while (is_running_) {
     DisplayMenu();
@@ -78,11 +86,14 @@ void ContactManager::Run() {
     }
   }
 }
-
-bool ContactManager::DisplayMenu() const {
+/**
+ * @brief Display a list of menu
+ * 
+ */
+void ContactManager::DisplayMenu() const {
   if (menu_list_.empty()) {
     std::cerr << "ERROR: Menu list is empty. Nothing to show.\n";
-    return false;
+    return;
   }
 
   std::cout << '\n';
@@ -90,14 +101,16 @@ bool ContactManager::DisplayMenu() const {
        std::ranges::views::enumerate(menu_list_)) {
     std::cout << index + 1 << ". " << element << '\n';
   }
-
-  return true;
 }
 
-bool ContactManager::ViewContacts() const {
+/**
+ * @brief Display a list of Contacts
+ * First show the index, name, phone number, and email
+ */
+void ContactManager::ViewContacts() const {
   if (contact_list_.empty()) {
     std::cerr << "ERROR: Contact list is empty. Nothing to view.\n";
-    return false;
+    return;
   }
 
   for (const auto& [index, contact] :
@@ -107,40 +120,45 @@ bool ContactManager::ViewContacts() const {
     std::cout << "Phone Number: " << contact.phone_number << '\n';
     std::cout << "Email: " << contact.email << '\n';
   }
-
-  return true;
 }
 
-bool ContactManager::AddContact() {
+/**
+ * @brief Add contact to the contact list
+ * 
+ */
+void ContactManager::AddContact() {
   std::string name;
   std::string phone_number;
   std::string email;
 
   std::optional<std::string> name_opt =
       util::get_user_input("\nEnter your name: ");
-  if (!name_opt.has_value() || name_opt->empty()) return false;
+  if (!name_opt.has_value() || name_opt->empty()) return;
   name = std::move(*name_opt);
 
   std::optional<std::string> phone_number_opt =
       util::get_user_input("Enter your phone number: ");
-  if (!phone_number_opt.has_value() || phone_number_opt->empty()) return false;
+  if (!phone_number_opt.has_value() || phone_number_opt->empty()) return;
   phone_number = std::move(*phone_number_opt);
 
   std::optional<std::string> email_opt =
       util::get_user_input("Enter your email: ");
-  if (!email_opt.has_value() || email_opt->empty()) return false;
+  if (!email_opt.has_value() || email_opt->empty()) return;
   email = std::move(*email_opt);
 
   contact_list_.emplace_back(std::move(name), std::move(phone_number),
                              std::move(email));
   std::cout << "Contact added successfully!\n";
-  return true;
 }
 
-bool ContactManager::DeleteContact() {
+/**
+ * @brief Delete a contact from the contact list
+ * 
+ */
+void ContactManager::DeleteContact() {
   if (contact_list_.empty()) {
     std::cerr << "ERROR: The contact list is empty. Nothing to delete.\n";
-    return false;
+    return;
   }
 
   ViewContacts();
@@ -149,7 +167,7 @@ bool ContactManager::DeleteContact() {
 
   if (!util::get_menu_selection("\nChoose a contact to delete (#): ",
                                 selection_index)) {
-    return false;
+    return;
   }
 
   const int zero_based_index = selection_index - 1;
@@ -158,20 +176,23 @@ bool ContactManager::DeleteContact() {
       zero_based_index >= static_cast<int>(contact_list_.size())) {
     std::cerr << "ERROR: Invalid contact number selected (" << selection_index
               << "). Deletion aborted.\n";
-    return false;
+    return;
   }
 
   const std::string deleted_name = contact_list_[zero_based_index].name;
   contact_list_.erase(contact_list_.begin() + zero_based_index);
 
   std::cout << "Successfully deleted contact: " << deleted_name << ".\n";
-  return true;
 }
 
-bool ContactManager::SaveContactList() {
+/**
+ * @brief Save the contact list to a json file
+ * 
+ */
+void ContactManager::SaveContactList() const {
   if (contact_list_.empty()) {
     std::cerr << "ERROR: Contact list is empty. Nothing to save.\n";
-    return false;
+    return;
   }
 
   std::ofstream output_file(kFileName.data());
@@ -179,7 +200,7 @@ bool ContactManager::SaveContactList() {
   if (!output_file.is_open()) {
     std::cerr << "ERROR: Failed to open file for writing: " << kFileName
               << '\n';
-    return false;
+    return;
   }
 
   json output_json;
@@ -190,20 +211,23 @@ bool ContactManager::SaveContactList() {
 
   try {
     output_file << output_json.dump(2);
-    return true;
   } catch (const json::exception& e) {
     std::cerr << "ERROR: JSON serialization failed: " << e.what() << '\n';
-    return false;
+    return;
   }
 }
 
-bool ContactManager::LoadContactList() {
+/**
+ * @brief Load the contact list from a json file
+ * 
+ */
+void ContactManager::LoadContactList() {
   std::ifstream input_file(kFileName.data());
 
   if (!input_file.is_open()) {
     std::cerr << "INFO: No previous contact file found (" << kFileName
               << "). Starting fresh.\n";
-    return true;
+    return;
   }
 
   int contact_count = 0;
@@ -215,7 +239,7 @@ bool ContactManager::LoadContactList() {
     if (input_json.at("file_marker").get<std::string>() != kFileMarker) {
       std::cerr
           << "ERROR: File format error. Missing or invalid file marker.\n";
-      return false;
+      return;
     }
 
     contact_count = input_json.at("contact_count").get<int>();
@@ -223,12 +247,10 @@ bool ContactManager::LoadContactList() {
 
     std::cout << "INFO: Successfully loaded " << contact_count
               << " contacts from the save file.\n";
-
-    return true;
   } catch (const json::exception& e) {
     std::cerr << "ERROR: Failed to load contacts (JSON ERROR): " << e.what()
               << ". Starting fresh.\n";
-    return false;
+    return;
   }
 }
 

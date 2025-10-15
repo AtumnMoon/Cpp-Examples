@@ -23,9 +23,9 @@ struct Contact {
         email(std::move(mail)) {}
 
   // Properties of the Contact Object
-  std::string name;
-  std::string phone_number;
-  std::string email;
+  std::string name {};
+  std::string phone_number {};
+  std::string email {};
 };
 
 // =========================================================================
@@ -44,14 +44,14 @@ class ContactManager {
   MenuActions action_map_;
   bool is_running_ = true;
 
-  bool DisplayMenu() const;
-  bool ViewContacts() const;
+  void DisplayMenu() const;
+  void ViewContacts() const;
 
-  bool AddContact();
-  bool DeleteContact();
+  void AddContact();
+  void DeleteContact();
 
-  bool SaveContactList();
-  bool LoadContactList();
+  void SaveContactList() const;
+  void LoadContactList();
 
   void Exit();
 };
