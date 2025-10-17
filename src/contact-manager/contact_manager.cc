@@ -2,32 +2,16 @@
 
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <ranges>
-#include <string>
-#include <string_view>
-#include <vector>
 
-#include "json.hpp"
-#include "util.h"
-
-using Action = std::function<void()>;
-using MenuActions = std::map<int, Action>;
-
-using json = nlohmann::json;
-
-constexpr std::string_view kFileMarker = "ContactManagerV2";
-constexpr std::string_view kFileName = "contacts.json";
+#include "util_io.h"
 
 // =========================================================================
 //  JSON Serialization Helpers
 // =========================================================================
 
 /**
- * @brief Converts a Contact object to a JSON object (Serialization).
- * This function must be in the same namespace/scope as Contacts to work.
- * @param j The JSON object to populate.
- * @param c The Contact object to serialize.
+ * Implementation of to_json
  */
 void to_json(json& j, const Contact& c) {
   j = json{
@@ -35,10 +19,7 @@ void to_json(json& j, const Contact& c) {
 }
 
 /**
- * @brief Converts a Json object to a Contact object (Deserialization).
- * This function must be in the same namespace/scope as Contacts to work.
- * @param j The JSON object to read from.
- * @param c The Contact object to populate.
+ * Implementation of from_json
  */
 void from_json(const json& j, Contact& c) {
   c.name = j.at("name").get<std::string>();
@@ -51,8 +32,7 @@ void from_json(const json& j, Contact& c) {
 // =========================================================================
 
 /**
- * @brief Construct a new Contact Manager:: Contact Manager object
- * 
+ * Implementation of ContactManager::ContactManager construct
  */
 ContactManager::ContactManager() {
   menu_list_ = {"Add Contact", "View All Contacts", "Delete Contact",
@@ -66,17 +46,12 @@ ContactManager::ContactManager() {
 }
 
 /**
- * @brief Run the Contact Manager loop (the main execution program).
- * 
+ * Implementation of ContactManager::Run
  */
 void ContactManager::Run() {
   while (is_running_) {
     DisplayMenu();
-    int input_selection = 0;
-
-    if (!util::get_menu_selection("Option: ", input_selection)) {
-      return;
-    }
+    int input_selection = util::io::get_numeric_input<int>("Option: ");
 
     if (action_map_.count(input_selection)) {
       action_map_.at(input_selection)();
@@ -87,8 +62,7 @@ void ContactManager::Run() {
   }
 }
 /**
- * @brief Display a list of menu
- * 
+ * Implementation of ContactManager::DisplayMenu
  */
 void ContactManager::DisplayMenu() const {
   if (menu_list_.empty()) {
@@ -104,8 +78,7 @@ void ContactManager::DisplayMenu() const {
 }
 
 /**
- * @brief Display a list of Contacts
- * First show the index, name, phone number, and email
+ * Implementation of ContactManager::ViewContacts
  */
 void ContactManager::ViewContacts() const {
   if (contact_list_.empty()) {
@@ -123,28 +96,34 @@ void ContactManager::ViewContacts() const {
 }
 
 /**
- * @brief Add contact to the contact list
- * 
+ * Implementation of ContactManager::AddContact
  */
 void ContactManager::AddContact() {
   std::string name;
   std::string phone_number;
   std::string email;
 
-  std::optional<std::string> name_opt =
-      util::get_user_input("\nEnter your name: ");
-  if (!name_opt.has_value() || name_opt->empty()) return;
-  name = std::move(*name_opt);
+  std::string name_opt = util::io::get_line_input("Enter your name: ");
+  if (name_opt.empty()) {
+    std::cerr << "ERROR: Name is empty. Aborting action.\n";
+    return;
+  }
+  name = std::move(name_opt);
 
-  std::optional<std::string> phone_number_opt =
-      util::get_user_input("Enter your phone number: ");
-  if (!phone_number_opt.has_value() || phone_number_opt->empty()) return;
-  phone_number = std::move(*phone_number_opt);
+  std::string phone_number_opt =
+      util::io::get_line_input("Enter your phone number: ");
+  if (phone_number_opt.empty()) {
+    std::cerr << "ERROR: Phone number is empty. Aborting action.\n";
+    return;
+  }
+  phone_number = std::move(phone_number_opt);
 
-  std::optional<std::string> email_opt =
-      util::get_user_input("Enter your email: ");
-  if (!email_opt.has_value() || email_opt->empty()) return;
-  email = std::move(*email_opt);
+  std::string email_opt = util::io::get_line_input("Enter your email: ");
+  if (email_opt.empty()) {
+    std::cerr << "ERROR: Email is empty. Aborting action.\n";
+    return;
+  }
+  email = std::move(email_opt);
 
   contact_list_.emplace_back(std::move(name), std::move(phone_number),
                              std::move(email));
@@ -152,8 +131,7 @@ void ContactManager::AddContact() {
 }
 
 /**
- * @brief Delete a contact from the contact list
- * 
+ * Implementation of ContactManager::DeleteContact
  */
 void ContactManager::DeleteContact() {
   if (contact_list_.empty()) {
@@ -163,12 +141,8 @@ void ContactManager::DeleteContact() {
 
   ViewContacts();
 
-  int selection_index = 0;
-
-  if (!util::get_menu_selection("\nChoose a contact to delete (#): ",
-                                selection_index)) {
-    return;
-  }
+  int selection_index =
+      util::io::get_numeric_input<int>("Choose a contact to delete: ");
 
   const int zero_based_index = selection_index - 1;
 
@@ -180,14 +154,25 @@ void ContactManager::DeleteContact() {
   }
 
   const std::string deleted_name = contact_list_[zero_based_index].name;
-  contact_list_.erase(contact_list_.begin() + zero_based_index);
+  char user_input;
 
-  std::cout << "Successfully deleted contact: " << deleted_name << ".\n";
+  std::cout << "Are you sure you want to delete: " << deleted_name
+            << " (y/N)? ";
+  if (!std::cin >> user_input) {
+    std::cerr << "ERROR: Invalid input. Abording action.\n";
+    return;
+  }
+
+  if (user_input == 'Y' || user_input == 'y') {
+    contact_list_.erase(contact_list_.begin() + zero_based_index);
+    std::cout << "Successfully deleted contact: " << deleted_name << ".\n";
+  } else {
+    std::cout << "Aborting deletion of contact: " << deleted_name << ".\n";
+  }
 }
 
 /**
- * @brief Save the contact list to a json file
- * 
+ * Implementation of ContactManager::SaveContactList
  */
 void ContactManager::SaveContactList() const {
   if (contact_list_.empty()) {
@@ -218,8 +203,7 @@ void ContactManager::SaveContactList() const {
 }
 
 /**
- * @brief Load the contact list from a json file
- * 
+ * Implementation of ContactManager::LoadContactList
  */
 void ContactManager::LoadContactList() {
   std::ifstream input_file(kFileName.data());
@@ -254,6 +238,9 @@ void ContactManager::LoadContactList() {
   }
 }
 
+/**
+ * Implementation of ContactManager::Exit
+ */
 void ContactManager::Exit() {
   std::cout << "Exiting Contact Manager.\n";
   is_running_ = false;

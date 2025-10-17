@@ -2,9 +2,42 @@ cmake_minimum_required(VERSION 4.1.2)
 project(util VERSION 1.0 LANGUAGES CXX)
 
 set(
+    UTIL_FILE_SOURCES
+    util_file.h
+    util_file.cc
+)
+
+set(
+    UTIL_IO_SOURCES
+    util_io.h
+    util_io.cc
+)
+
+set(
+    UTIL_MATH_SOURCES
+    util_math.h
+    util_math.cc
+)
+
+set(
+    UTIL_STRING_SOURCES
+    util_string.h
+    util_string.cc
+)
+
+set(
+    UTIL_TIME_SOURCES
+    util_time.h
+    util_time.cc
+)
+
+set(
     PROJECT_SOURCES STATIC
-    util.cc
-    util.h
+    ${UTIL_FILE_SOURCES}
+    ${UTIL_IO_SOURCES}
+    ${UTIL_MATH_SOURCES}
+    ${UTIL_STRING_SOURCES}
+    ${UTIL_TIME_SOURCES}
 )
 
 add_library(${PROJECT_NAME} ${PROJECT_SOURCES})
