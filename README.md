@@ -6,10 +6,9 @@ I also have my [previous projects](https://github.com/AtumnMoon/Cpp-Examples-Old
 
 ## Projects
 
-Below are the list of my projects. Currently there is only one yet.
+Below are the list of my projects. Currently there is only one yet. I'll also be linking my other practice projects from their own repository if they are too large to be here.
 
 **Beginner:**
 
 - [Simple Calculator](src/simple-calculator/)
-
   - It's a simple calculator that can shows simplicity and function over complexity and mess.
