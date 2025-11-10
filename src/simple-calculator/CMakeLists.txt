@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.1.2)
-project(atm-machine VERSION 1.0 LANGUAGES CXX)
+project(simple-calculator VERSION 1.0 LANGUAGES CXX)
 
 set(
     PROJECT_SOURCES
